@@ -66,8 +66,6 @@ function ProjectCard({ project }: { project: ProjectResponse }) {
   )
 }
 
-const ADMIN_ROLES = new Set<Role>(['ADMIN', 'OWNER'])
-
 export default function ProjectsPage() {
   const user = useAuthStore((s) => s.user)
   const logout = useAuthStore((s) => s.logout)
@@ -77,7 +75,7 @@ export default function ProjectsPage() {
     queryFn: getProjects,
   })
 
-  const isAdmin = projects?.some((p) => ADMIN_ROLES.has(p.userRole))
+  const isAdmin = user?.companyRole === 'ADMIN' || user?.companyRole === 'OWNER'
 
   return (
     <div className="min-h-screen bg-gray-50">
