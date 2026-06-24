@@ -42,7 +42,6 @@ export default function ProjectNotificationsPanel({ projectId }: Props) {
   })
 
   const pending = notifications.filter((n) => n.status === 'PENDING')
-  const answered = notifications.filter((n) => n.status === 'ANSWERED')
 
   if (isLoading) return null
   if (notifications.length === 0) return null

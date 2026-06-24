@@ -377,7 +377,7 @@ function FolderRow({ node, depth }: { node: FolderNode; depth: number }) {
     creatingIn, newName, setNewName, startCreate, confirmCreate, cancelCreate,
     renamingId, renameVal, setRenameVal, startRename, confirmRename, cancelRename,
     requestDelete,
-    dragItem, dragOverId, setDragOver, commitDrop, startDrag, endDrag, moveFolder,
+    dragItem, dragOverId, setDragOver, commitDrop, startDrag, endDrag,
   } = useTree()
 
   const isExpanded = expanded.has(node.id)
@@ -571,7 +571,7 @@ export default function FolderTree({
   const [dragOverId, setDragOverId]    = useState<number | 'root' | null>(null)
 
   // ── mutations ──
-  const inv = (keys: string[][]) => keys.forEach((k) => queryClient.invalidateQueries({ queryKey: k }))
+  const inv = (keys: (string | number)[][]) => keys.forEach((k) => queryClient.invalidateQueries({ queryKey: k }))
 
   const createMut = useMutation({
     mutationFn: ({ name, parentId }: { name: string; parentId?: number | null }) =>
