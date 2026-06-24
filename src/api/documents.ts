@@ -36,6 +36,20 @@ export const archiveDocument = (projectId: number, documentId: number) =>
 
 export type AiIndexingMode = 'FULL' | 'CHUNKS_ONLY' | 'NONE'
 
+export interface ProjectAlert {
+  id: number
+  level: string
+  message: string
+  documentId: number | null
+  createdAt: string
+}
+
+export const getProjectAlerts = (projectId: number) =>
+  client.get<ProjectAlert[]>(`/projects/${projectId}/alerts`).then((r) => r.data)
+
+export const getDocumentAlerts = (projectId: number, documentId: number) =>
+  client.get<ProjectAlert[]>(`/projects/${projectId}/documents/${documentId}/alerts`).then((r) => r.data)
+
 export const uploadDocuments = (
   projectId: number,
   files: File[],

@@ -2,6 +2,7 @@ import { createContext, useContext, useMemo, useRef, useState, useEffect } from 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getDocuments, downloadDocument, deleteDocument, archiveDocument } from '../api/documents'
 import DocumentPreviewModal from './DocumentPreviewModal'
+import DocumentDetailModal from './DocumentDetailModal'
 import {
   getFolders,
   createFolder,
@@ -241,6 +242,7 @@ function DocRow({ doc, indent }: { doc: DocumentResponse; indent: number }) {
   const { projectId, moveDoc, dragItem, startDrag, endDrag, requestDeleteDoc } = useTree()
   const [showMove, setShowMove]       = useState(false)
   const [showPreview, setShowPreview] = useState(false)
+  const [showDetail, setShowDetail]   = useState(false)
 
   const date = new Date(doc.createdAt).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })
   const dot = statusDot[doc.status] ?? 'bg-gray-300'
@@ -277,8 +279,8 @@ function DocRow({ doc, indent }: { doc: DocumentResponse; indent: number }) {
           d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
       </svg>
 
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-800 truncate">{doc.name}</p>
+      <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setShowDetail(true)}>
+        <p className="text-sm font-medium text-gray-800 truncate hover:text-blue-600 transition-colors">{doc.name}</p>
         <p className="text-xs text-gray-400">{date}</p>
       </div>
 
@@ -363,6 +365,13 @@ function DocRow({ doc, indent }: { doc: DocumentResponse; indent: number }) {
           projectId={projectId}
           doc={doc}
           onClose={() => setShowPreview(false)}
+        />
+      )}
+      {showDetail && (
+        <DocumentDetailModal
+          projectId={projectId}
+          doc={doc}
+          onClose={() => setShowDetail(false)}
         />
       )}
     </div>
