@@ -50,6 +50,9 @@ export const getProjectAlerts = (projectId: number) =>
 export const getDocumentAlerts = (projectId: number, documentId: number) =>
   client.get<ProjectAlert[]>(`/projects/${projectId}/documents/${documentId}/alerts`).then((r) => r.data)
 
+export const reprocessDocument = (projectId: number, documentId: number) =>
+  client.post<DocumentResponse>(`/projects/${projectId}/documents/${documentId}/reprocess`).then((r) => r.data)
+
 export const uploadDocuments = (
   projectId: number,
   files: File[],

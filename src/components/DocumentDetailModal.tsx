@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { getDocumentAlerts } from '../api/documents'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { getDocumentAlerts, getProjectAlerts, reprocessDocument } from '../api/documents'
 import DocumentPreviewModal from './DocumentPreviewModal'
 import type { DocumentResponse } from '../types'
 
@@ -108,11 +108,24 @@ function ExtractedDataSection({ doc }: { doc: DocumentResponse }) {
 
 export default function DocumentDetailModal({ projectId, doc, onClose }: Props) {
   const [showFilePreview, setShowFilePreview] = useState(false)
+  const queryClient = useQueryClient()
+
+  const reprocessMut = useMutation({
+    mutationFn: () => reprocessDocument(projectId, doc.id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['documents', projectId] }),
+  })
 
   const { data: docAlerts = [] } = useQuery({
     queryKey: ['alerts', projectId, doc.id],
     queryFn: () => getDocumentAlerts(projectId, doc.id),
     staleTime: 60_000,
+  })
+
+  const { data: projectAlerts = [] } = useQuery({
+    queryKey: ['alerts', projectId, 'project'],
+    queryFn: () => getProjectAlerts(projectId),
+    staleTime: 60_000,
+    select: (data) => data.filter((a) => a.documentId === null),
   })
 
   const statusLabel: Record<string, string> = {
@@ -149,6 +162,20 @@ export default function DocumentDetailModal({ projectId, doc, onClose }: Props) 
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
+              {doc.status === 'ERROR' && (
+                <button
+                  onClick={() => reprocessMut.mutate()}
+                  disabled={reprocessMut.isPending}
+                  className="flex items-center gap-1.5 text-sm font-medium text-red-600 bg-red-50
+                             hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  {reprocessMut.isPending ? 'Wysyłanie...' : 'Przetwórz ponownie'}
+                </button>
+              )}
               <button
                 onClick={() => setShowFilePreview(true)}
                 className="flex items-center gap-1.5 text-sm font-medium text-indigo-600 bg-indigo-50
@@ -182,6 +209,27 @@ export default function DocumentDetailModal({ projectId, doc, onClose }: Props) 
                 </h3>
                 <div className="space-y-2">
                   {docAlerts.map((a) => (
+                    <div key={a.id}
+                      className={`flex gap-3 p-3 rounded-xl border text-sm ${levelColor[a.level] ?? 'bg-gray-50 text-gray-700 border-gray-200'}`}>
+                      <span className="shrink-0 text-base leading-5">{levelIcon[a.level] ?? '•'}</span>
+                      <div className="flex-1 min-w-0">
+                        <p>{a.message}</p>
+                        <p className="text-xs opacity-60 mt-0.5">{timeAgo(a.createdAt)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Project-level alerts (cross-analysis) */}
+            {projectAlerts.length > 0 && (
+              <section>
+                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                  Alerty projektowe (cross-analiza)
+                </h3>
+                <div className="space-y-2">
+                  {projectAlerts.map((a) => (
                     <div key={a.id}
                       className={`flex gap-3 p-3 rounded-xl border text-sm ${levelColor[a.level] ?? 'bg-gray-50 text-gray-700 border-gray-200'}`}>
                       <span className="shrink-0 text-base leading-5">{levelIcon[a.level] ?? '•'}</span>
