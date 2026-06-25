@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getDocumentAlerts, getProjectAlerts, reprocessDocument } from '../api/documents'
+import client from '../api/client'
 import DocumentPreviewModal from './DocumentPreviewModal'
 import type { DocumentResponse } from '../types'
 
@@ -106,13 +107,25 @@ function ExtractedDataSection({ doc }: { doc: DocumentResponse }) {
   )
 }
 
-export default function DocumentDetailModal({ projectId, doc, onClose }: Props) {
+export default function DocumentDetailModal({ projectId, doc: initialDoc, onClose }: Props) {
   const [showFilePreview, setShowFilePreview] = useState(false)
   const queryClient = useQueryClient()
 
+  const { data: liveDoc = initialDoc } = useQuery({
+    queryKey: ['document', projectId, initialDoc.id],
+    queryFn: () => client.get<DocumentResponse>(`/projects/${projectId}/documents/${initialDoc.id}`).then((r) => r.data),
+    refetchInterval: (query) => query.state.data?.status === 'PROCESSING' ? 3000 : false,
+    staleTime: 0,
+  })
+
+  const doc = liveDoc
+
   const reprocessMut = useMutation({
     mutationFn: () => reprocessDocument(projectId, doc.id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['documents', projectId] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['documents', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['document', projectId, doc.id] })
+    },
   })
 
   const { data: docAlerts = [] } = useQuery({
@@ -129,14 +142,18 @@ export default function DocumentDetailModal({ projectId, doc, onClose }: Props) 
   })
 
   const statusLabel: Record<string, string> = {
-    PENDING: 'Oczekuje', PROCESSING: 'Przetwarzanie', DONE: 'Gotowy', ERROR: 'Błąd',
+    PENDING: 'Oczekuje', PROCESSING: 'Przetwarzanie', READY: 'Gotowy', ERROR: 'Błąd', ARCHIVED: 'Archiwum',
   }
   const statusColor: Record<string, string> = {
     PENDING: 'bg-gray-100 text-gray-500',
     PROCESSING: 'bg-blue-50 text-blue-600',
-    DONE: 'bg-emerald-50 text-emerald-700',
+    READY: 'bg-emerald-50 text-emerald-700',
     ERROR: 'bg-red-50 text-red-600',
+    ARCHIVED: 'bg-gray-100 text-gray-400',
   }
+
+  const canReprocess = doc.status !== 'ARCHIVED' &&
+    (doc.status === 'ERROR' || (doc.status === 'READY' && !doc.extractedData))
 
   return (
     <>
@@ -162,7 +179,7 @@ export default function DocumentDetailModal({ projectId, doc, onClose }: Props) 
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              {doc.status === 'ERROR' && (
+              {canReprocess && (
                 <button
                   onClick={() => reprocessMut.mutate()}
                   disabled={reprocessMut.isPending}

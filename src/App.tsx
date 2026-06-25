@@ -11,6 +11,7 @@ import TokensAdmin from './pages/admin/TokensAdmin'
 import KnowledgeAdmin from './pages/admin/KnowledgeAdmin'
 import AiConfigAdmin from './pages/admin/AiConfigAdmin'
 import ConfigAdmin from './pages/admin/ConfigAdmin'
+import ArchivedAdmin from './pages/admin/ArchivedAdmin'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
 
@@ -38,6 +39,7 @@ export default function App() {
               <Route path="/admin/knowledge" element={<KnowledgeAdmin />} />
               <Route path="/admin/ai-config" element={<AiConfigAdmin />} />
               <Route path="/admin/config" element={<ConfigAdmin />} />
+              <Route path="/admin/archived" element={<ArchivedAdmin />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/projects" replace />} />

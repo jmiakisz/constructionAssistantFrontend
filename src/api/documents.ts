@@ -53,6 +53,21 @@ export const getDocumentAlerts = (projectId: number, documentId: number) =>
 export const reprocessDocument = (projectId: number, documentId: number) =>
   client.post<DocumentResponse>(`/projects/${projectId}/documents/${documentId}/reprocess`).then((r) => r.data)
 
+export interface ArchivedDocumentResponse {
+  id: number
+  name: string
+  documentType: string
+  projectId: number
+  projectName: string
+  createdAt: string
+}
+
+export const getArchivedDocuments = () =>
+  client.get<ArchivedDocumentResponse[]>('/admin/archived-documents').then((r) => r.data)
+
+export const adminDeleteDocument = (documentId: number) =>
+  client.delete(`/admin/archived-documents/${documentId}`)
+
 export const uploadDocuments = (
   projectId: number,
   files: File[],
